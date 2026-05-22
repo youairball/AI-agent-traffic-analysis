@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Agent SOC Workflow</title>
+    <style>
+      :root {
+        --bg: #0f1217;
+        --panel: #171b22;
+        --line: #2a3240;
+        --text: #e9eef7;
+        --muted: #9aa8bc;
+        --green: #42d392;
+        --gold: #f2b84b;
+        --purple: #b58cff;
+        --blue: #63b3ff;
+        --red: #ff6b5f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+      }
+
+      main {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 0 0 28px;
+        color: var(--muted);
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(120px, 1fr));
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .node {
+        min-height: 98px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: var(--panel);
+      }
+
+      .node strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .node span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .start {
+        border-color: var(--green);
+      }
+
+      .parser {
+        border-color: var(--green);
+      }
+
+      .detector {
+        border-color: var(--gold);
+      }
+
+      .chain {
+        border-color: var(--purple);
+      }
+
+      .response {
+        border-color: var(--blue);
+      }
+
+      .alert {
+        border-color: var(--red);
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+      }
+
+      pre {
+        margin: 0;
+        color: #9be9a8;
+        white-space: pre-wrap;
+        line-height: 1.55;
+        font-size: 13px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 8px;
+        text-align: left;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .high {
+        color: var(--red);
+        font-weight: 700;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--text);
+        line-height: 1.8;
+      }
+
+      @media (max-width: 860px) {
+        .workflow,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AI Agent SOC Workflow</h1>
+      <p class="subtitle">Multi-agent traffic analysis, attack-chain reasoning and automated incident response.</p>
+
+      <section class="workflow" aria-label="Agent workflow">
+        <div class="node start"><strong>START</strong><span>Raw security logs</span></div>
+        <div class="node parser"><strong>LogParserAgent</strong><span>日志解析<br />结构化事件输出</span></div>
+        <div class="node detector"><strong>ThreatDetectionAgent</strong><span>规则匹配<br />上下文状态分析</span></div>
+        <div class="node chain"><strong>AttackChainAgent</strong><span>攻击链构建<br />时间序列关联</span></div>
+        <div class="node response"><strong>ResponseAgent</strong><span>响应生成<br />AI/规则建议输出</span></div>
+        <div class="node alert"><strong>AlertManager</strong><span>告警管理<br />存储与通知</span></div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>终端运行日志</h2>
+          <pre id="logs">Loading logs...</pre>
+        </div>
+        <div class="panel">
+          <h2>响应建议</h2>
+          <ul id="actions"></ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>实时告警列表</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>告警类型</th>
+              <th>源 IP</th>
+              <th>风险等级</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="alerts"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const embeddedDashboardData = {
+        logs: [
+          "[2025-05-25 10:15:24] [ParserAgent] 解析日志: Failed login from 192.168.1.10",
+          "[2025-05-25 10:15:24] [DetectorAgent] 更新状态: IP 192.168.1.10 失败次数 = 1",
+          "[2025-05-25 10:15:25] [DetectorAgent] 触发告警: BruteForce 来自 192.168.1.10",
+          "[2025-05-25 10:15:25] [ChainAgent] 构建攻击链: Credential Access -> Brute Force",
+          "[2025-05-25 10:15:25] [ResponseAgent] 生成响应建议: block_ip, enable_mfa, audit_logs",
+        ],
+        alerts: [
+          {
+            timestamp: "2025-05-25 10:15:25",
+            alert_type: "BruteForce",
+            source_ip: "192.168.1.10",
+            risk_level: "HIGH",
+            status: "已处理",
+            response_actions: ["封禁 IP: 192.168.1.10", "启用多因素认证 MFA", "检查登录日志和系统日志", "复核近期权限变更与异常会话"],
+          },
+        ],
+      };
+
+      function renderDashboard(data) {
+        const alert = data.alerts[0];
+
+        document.querySelector("#logs").textContent = data.logs.join("\n");
+        document.querySelector("#alerts").innerHTML = data.alerts
+          .map(
+            (item) => `
+              <tr>
+                <td>${item.timestamp}</td>
+                <td>${item.alert_type}</td>
+                <td>${item.source_ip}</td>
+                <td class="high">${item.risk_level}</td>
+                <td>${item.status}</td>
+              </tr>
+            `,
+          )
+          .join("");
+        document.querySelector("#actions").innerHTML = alert.response_actions.map((action) => `<li>${action}</li>`).join("");
+      }
+
+      async function loadDashboard() {
+        try {
+          const response = await fetch("./dashboard-data.json");
+          renderDashboard(await response.json());
+        } catch {
+          renderDashboard(embeddedDashboardData);
+        }
+      }
+
+      loadDashboard();
+    </script>
+  </body>
+</html>

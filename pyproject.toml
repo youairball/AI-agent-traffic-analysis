@@ -1,0 +1,11 @@
+[project]
+name = "ai-agent-soc-traffic-analysis"
+version = "0.1.0"
+description = "Multi-agent SOC traffic analysis and automated incident response demo."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "youairball" }]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
